@@ -4,11 +4,21 @@ import bcrypt from "bcryptjs";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/generateToken.js";
 import cookie from "cookie-parser"
 import env from "../config/env.js";
+import sendEmail from "../utils/sendEmail.js";
+import Otp from "../models/Otp.model.js";
 
 export const registerController = async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, otp } = req.body;
 
-    if (!name || !email || !password) throw new ApiError(400, "All fields are required");
+    if (!name || !email || !password || !otp) throw new ApiError(400, "All fields are required");
+    if (otp.length !== 6) throw new ApiError(400, "OTP must be 6 digits");
+
+    const existingOtp = await Otp.findOne({ email });
+
+    if (!existingOtp) throw new ApiError(400, "OTP expired or not found");
+
+    const isOtpMatch = await bcrypt.compare(otp, existingOtp.otp);
+    if (!isOtpMatch) throw new ApiError(400, "Invalid OTP");
 
     const isExists = await User.findOne({ email });
     if (isExists) throw new ApiError(409, "User with this email already exists");
@@ -16,6 +26,8 @@ export const registerController = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({ name, email, password: hashedPassword });
+
+    await Otp.deleteOne({ email });
 
     const accessToken = generateAccessToken(
         newUser._id,
@@ -156,5 +168,129 @@ export const refreshTokenController = async (req, res) => {
         success: true,
         message: "Token refreshed successfully",
         token: newAccessToken
+    });
+};
+
+export const sendResetOtp = async (req, res) => {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.resetOtp = otp;
+
+    // 5 min expiry
+    user.resetOtpExpire = Date.now() + 5 * 60 * 1000;
+
+    await user.save();
+
+    await sendEmail(
+        email,
+        "Password Reset OTP",
+        `Your OTP is ${otp}`
+    );
+
+    res.json({
+        success: true,
+        message: "OTP sent successfully"
+    });
+}
+
+export const resetPassword = async (req, res) => {
+    const {
+        email,
+        otp,
+        newPassword
+    } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    // Check OTP
+    if (user.resetOtp !== otp) {
+        throw new ApiError(400, "Invalid OTP");
+    }
+
+    // Check expiry
+    if (user.resetOtpExpire < Date.now()) {
+        throw new ApiError(400, "OTP expired");
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+
+    // Clear OTP
+    user.resetOtp = undefined;
+    user.resetOtpExpire = undefined;
+
+    await user.save();
+
+    res.json({
+        success: true,
+        message: "Password reset successful"
+    });
+};
+
+export const sendRegisterOtp = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        throw new ApiError(400, "Email is required");
+    }
+
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+        throw new ApiError(409, "User with this email already exists");
+    }
+
+    const otp = Math.floor(
+        100000 +
+        Math.random() * 900000
+    ).toString();
+
+    const hashedOtp = await bcrypt.hash(otp, 10);
+
+    await Otp.findOneAndUpdate(
+        { email },
+        {
+            otp: hashedOtp,
+
+            expiresAt:
+                new Date(
+                    Date.now() +
+                    10 *
+                    60 *
+                    1000
+                ),
+        },
+
+        {
+            upsert: true,  // if docs with email doesn't exist, create new
+            new: true,
+        }
+    );
+
+    await sendEmail(
+        email,
+        "Password Reset OTP",
+        `Your OTP is ${otp}`
+    );
+
+    res.status(200).json({
+        success: true,
+        message:
+            "OTP sent successfully",
     });
 };

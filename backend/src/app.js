@@ -4,8 +4,13 @@ import authRouter from "./routes/auth.routes.js";
 import morgan from "morgan";
 import env from "./config/env.js";
 import authMiddleware from "./middleware/auth.middleware.js";
+import cors from "cors";
 
 const app = express();
+
+app.use(cors({
+    origin: env.CLIENT_URI || "http://localhost:5173",
+}))
 
 app.use(express.json());
 if (env.NODE_ENV !== "production") {
