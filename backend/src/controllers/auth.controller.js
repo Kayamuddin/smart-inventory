@@ -31,11 +31,11 @@ export const registerController = async (req, res) => {
 
     const accessToken = generateAccessToken(
         newUser._id,
-        newUser.roles
+        newUser.role
     );
     const refreshToken = generateRefreshToken(
         newUser._id,
-        newUser.roles
+        newUser.role
     );
 
     newUser.refreshToken = refreshToken;
@@ -54,7 +54,7 @@ export const registerController = async (req, res) => {
         data: {
             name: newUser.name,
             email: newUser.email,
-            roles: newUser.roles
+            role: newUser.role
         },
         token: accessToken
     });
@@ -75,11 +75,11 @@ export const loginController = async (req, res) => {
 
     const accessToken = generateAccessToken(
         user._id,
-        user.roles
+        user.role
     );
     const refreshToken = generateRefreshToken(
         user._id,
-        user.roles
+        user.role
     );
 
     user.refreshToken = refreshToken;
@@ -98,7 +98,7 @@ export const loginController = async (req, res) => {
         data: {
             name: user.name,
             email: user.email,
-            roles: user.roles
+            role: user.role
         },
         token: accessToken
     });
@@ -145,12 +145,12 @@ export const refreshTokenController = async (req, res) => {
 
     const newAccessToken = generateAccessToken(
         user._id,
-        user.roles
+        user.role
     );
 
     const newRefreshToken = generateRefreshToken(
         user._id,
-        user.roles
+        user.role
     );
 
     // Refresh Token Rotation

@@ -23,7 +23,7 @@ export const verifyAccessToken = (token) => {
             env.JWT_ACCESS_SECRET
         );
     } catch (error) {
-        throw new ApiError(401, "Token is Invalid")
+        throw new ApiError(401, "Access Token is Invalid")
     }
 };
 
@@ -34,6 +34,6 @@ export const verifyRefreshToken = (token) => {
             env.JWT_REFRESH_SECRET
         );
     } catch (error) {
-        throw new ApiError(401, "Token is Invalid")
+        throw new ApiError(401, "Refresh Token is Invalid")
     }
 };

@@ -17,9 +17,9 @@ const UserSchema = new mongoose.Schema({
         required: [true, "Password is required"],
         min: [8, "Password length must be minimum 8"]
     },
-    roles: {
+    role: {
         type: String,
-        enum: ["admin", "employee", "staff", "customer"],
+        enum: ["admin", "supply", "employee", "customer"],
         default: "customer"
     },
     refreshToken: String,

@@ -2,11 +2,12 @@ import axios from 'axios';
 
 const API = axios.create({
     baseURL: import.meta.env.VITE_SERVER_URI || "http://localhost:3000/",
+    withCredentials: true,
 });
 
 API.interceptors.request.use(
     (request) => {
-        const token = localStorage.getItem("accessToken");
+        const token = localStorage.getItem("token");
 
         if (token) {
             request.headers.Authorization = `Bearer ${token}`;
@@ -41,7 +42,7 @@ API.interceptors.response.use(
                 window.location.href = "/login";
             }
 
-            const newAccessToken = refreshResponse.data.accessToken;
+            const newAccessToken = refreshResponse.data.token;
 
             localStorage.setItem("token", newAccessToken);
 

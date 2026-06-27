@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null,
+    user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : { name: "User", email: "", role: "" },
     token: localStorage.getItem("token") || null,
 };
 
@@ -14,7 +14,8 @@ const authSlice = createSlice({
             state.token = action.payload.token;
             state.user = {
                 name: action.payload.data.name,
-                email: action.payload.data.email
+                email: action.payload.data.email,
+                role: action.payload.data.role,
             }
             localStorage.setItem("user", JSON.stringify(state.user))
             window.location.href = "/"

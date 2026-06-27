@@ -12,7 +12,7 @@ const authMiddleware = async (req, res, next) => {
 
     const decoded = verifyAccessToken(token);
 
-    const user = await User.findById(decoded.id).select("-password -refreshToken");
+    const user = await User.findById(decoded.id).select("-password -refreshToken -resetOtp -resetOtpExpiry");
 
     if (!user) throw new ApiError(401, "User no longer exists");
 
