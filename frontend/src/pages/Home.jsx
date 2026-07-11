@@ -2,6 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../redux/slice/authSlice.js";
 import { Link } from "react-router-dom";
 import { Button } from "@mui/material";
+import { Logout as LogoutIcon } from "@mui/icons-material";
 
 function Home() {
   const dispatch = useDispatch();
@@ -10,7 +11,11 @@ function Home() {
   return (
     <>
       <div>Hello {user?.name}</div>
-      <Button variant="contained" onClick={() => dispatch(logout())}>
+      <Button
+        variant="contained"
+        startIcon={<LogoutIcon />}
+        onClick={() => dispatch(logout())}
+      >
         logout
       </Button>
       <br />

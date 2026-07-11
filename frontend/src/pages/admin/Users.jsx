@@ -72,8 +72,8 @@ function Users() {
       role: user.role,
     });
 
-    setOpen(true);
     handleMenuClose();
+    setOpen(true);
   };
 
   const handleSave = async () => {
@@ -135,7 +135,7 @@ function Users() {
       name: "",
       email: "",
       password: "",
-      role: "user",
+      role: "",
     });
 
     setOpen(true);
@@ -144,7 +144,13 @@ function Users() {
   return (
     <div>
       <div className="flex justify-end mb-4">
-        <Button variant="contained" onClick={handleAddUser}>
+        <Button
+          variant="contained"
+          onClick={(e) => {
+            e.currentTarget.blur(); // remove focus
+            handleAddUser();
+          }}
+        >
           Add User
         </Button>
       </div>
@@ -199,7 +205,12 @@ function Users() {
                     })}
                   </td>
                   <td className="px-3 py-1 not-md:text-xs not-md:font-semibold md:py-1">
-                    <IconButton onClick={(e) => handleMenuOpen(e, user)}>
+                    <IconButton
+                      onClick={(e) => {
+                        e.currentTarget.blur(); // remove focus
+                        handleMenuOpen(e, user);
+                      }}
+                    >
                       <MoreHoriz className="text-white pl-1" fontSize="large" />
                     </IconButton>
                   </td>
@@ -296,7 +307,7 @@ function Users() {
               <MenuItem value="customer">Customer</MenuItem>
               <MenuItem value="admin">Admin</MenuItem>
               <MenuItem value="employee">Employee</MenuItem>
-              <MenuItem value="supply">Supply</MenuItem>
+              <MenuItem value="supplier">Supplier</MenuItem>
             </Select>
           </FormControl>
         </DialogContent>
