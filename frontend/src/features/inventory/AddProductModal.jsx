@@ -7,37 +7,25 @@ import {
   Button,
   Grid,
   TextField,
-  MenuItem,
   CircularProgress,
   Typography,
   Autocomplete,
 } from "@mui/material";
 import dayjs from "dayjs";
 
-import { addInventory } from "../../pages/inventory/index.js";
+import { addInventory } from "../../services/inventory.service.js";
 import { useDispatch } from "react-redux";
 import { showToast } from "../../redux/slice/toastSlice.js";
-
-const categories = [
-  "Dairy",
-  "Bakery",
-  "Beverages",
-  "Snacks",
-  "Frozen",
-  "Medicine",
-  "Electronics",
-  "Other",
-];
 
 export default function AddProductModal({
   open,
   handleClose,
   refresh,
   products,
+  categoriesData,
 }) {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
-
   const uniqueProducts = Array.from(
     new Map(
       products.filter((p) => p.name).map((p) => [p.name.toLowerCase(), p]),
@@ -116,6 +104,7 @@ export default function AddProductModal({
 
     try {
       setLoading(true);
+      console.log(form);
 
       const payload = {
         ...form,
@@ -208,21 +197,26 @@ export default function AddProductModal({
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              select
-              fullWidth
-              label="Category"
-              name="category"
+            <Autocomplete
+              freeSolo
               value={form.category}
-              onChange={handleChange}
-              required
-            >
-              {categories.map((category) => (
-                <MenuItem key={category} value={category}>
-                  {category}
-                </MenuItem>
-              ))}
-            </TextField>
+              options={categoriesData}
+              onInputChange={(event, value) => {
+                setForm((prev) => ({
+                  ...prev,
+                  category: value,
+                }));
+              }}
+              onChange={(event, value) => {
+                setForm((prev) => ({
+                  ...prev,
+                  category: value || "",
+                }));
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label="Category" fullWidth required />
+              )}
+            />
           </Grid>
         </Grid>
 

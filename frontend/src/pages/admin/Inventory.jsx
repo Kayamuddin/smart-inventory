@@ -6,6 +6,7 @@ import {
   FormControl,
   Select,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -31,6 +32,7 @@ export default function Inventory() {
     setPagination,
 
     category,
+    categoriesData,
     filterByCategory,
   } = useInventory();
 
@@ -44,9 +46,9 @@ export default function Inventory() {
   );
 
   return (
-    <div className="p-4 w-full">
+    <div className="w-full h-[calc(100vh-64px)] p-4 flex flex-col">
       <Typography variant="h4" fontWeight={700} mb={3}>
-        Inventory Management
+        Manage Inventory
       </Typography>
 
       <Grid container spacing={2} mb={3}>
@@ -94,11 +96,12 @@ export default function Inventory() {
               className="bg-white text-black"
             >
               <MenuItem value="">All Categories</MenuItem>
-              <MenuItem value="Dairy">Dairy</MenuItem>
-              <MenuItem value="Bakery">Bakery</MenuItem>
-              <MenuItem value="Beverages">Beverages</MenuItem>
-              <MenuItem value="Snacks">Snacks</MenuItem>
-              <MenuItem value="Frozen">Frozen</MenuItem>
+
+              {categoriesData.map((cat) => (
+                <MenuItem key={cat} value={cat}>
+                  {cat}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </div>
@@ -117,64 +120,73 @@ export default function Inventory() {
           Add Product
         </Button>
       </div>
+      {loading ? (
+        <div className="flex flex-1 justify-center w-full items-center">
+          <CircularProgress />
+        </div>
+      ) : filteredInventory.length === 0 ? (
+        <div className="text-white text-center py-5">No products found.</div>
+      ) : (
+        <>
+          <InventoryTable
+            products={filteredInventory}
+            loading={loading}
+            refresh={refreshInventory}
+          />
 
-      <InventoryTable
-        products={filteredInventory}
-        loading={loading}
-        refresh={refreshInventory}
-      />
+          <div className="mt-4 flex items-center justify-between">
+            <FormControl size="small">
+              <Select
+                value={pagination.limit}
+                onChange={(e) =>
+                  setPagination((prev) => ({
+                    ...prev,
+                    page: 1,
+                    limit: Number(e.target.value),
+                  }))
+                }
+                className="bg-white text-black "
+              >
+                <MenuItem value={10}>10</MenuItem>
+                <MenuItem value={20}>20</MenuItem>
+                <MenuItem value={50}>50</MenuItem>
+                <MenuItem value={100}>100</MenuItem>
+              </Select>
+            </FormControl>
 
-      <div className="mt-4 flex items-center justify-between">
-        <FormControl size="small">
-          <Select
-            value={pagination.limit}
-            onChange={(e) =>
-              setPagination((prev) => ({
-                ...prev,
-                page: 1,
-                limit: Number(e.target.value),
-              }))
-            }
-            className="bg-white text-black "
-          >
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={20}>20</MenuItem>
-            <MenuItem value={50}>50</MenuItem>
-            <MenuItem value={100}>100</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Pagination
-          page={pagination.page}
-          count={pagination.totalPages}
-          color="primary"
-          onChange={(e, page) =>
-            setPagination((prev) => ({
-              ...prev,
-              page,
-            }))
-          }
-          sx={{
-            "& .MuiPaginationItem-root": {
-              color: "#fff",
-              borderColor: "#475569",
-            },
-            "& .Mui-selected": {
-              backgroundColor: "#2563eb !important",
-              color: "#fff",
-            },
-            "& .MuiPaginationItem-root:hover": {
-              backgroundColor: "#1e293b",
-            },
-          }}
-        />
-      </div>
-
+            <Pagination
+              page={pagination.page}
+              count={pagination.totalPages}
+              color="primary"
+              onChange={(e, page) =>
+                setPagination((prev) => ({
+                  ...prev,
+                  page,
+                }))
+              }
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  color: "#fff",
+                  borderColor: "#475569",
+                },
+                "& .Mui-selected": {
+                  backgroundColor: "#2563eb !important",
+                  color: "#fff",
+                },
+                "& .MuiPaginationItem-root:hover": {
+                  backgroundColor: "#1e293b",
+                },
+              }}
+            />
+          </div>
+        </>
+      )}
       <AddProductModal
         open={openModal}
         handleClose={() => setOpenModal(false)}
         refresh={refreshInventory}
         products={inventory}
+        categoriesData={categoriesData}
       />
     </div>
   );

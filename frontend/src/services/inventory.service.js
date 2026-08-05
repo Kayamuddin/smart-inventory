@@ -1,4 +1,4 @@
-import API from "../../services/api.js";
+import API from "./api";
 
 // Get all inventory
 export const getInventory = async (params) => {
@@ -14,7 +14,7 @@ export const addInventory = async (data) => {
 
 // Update inventory batch
 export const updateBatch = async (batchId, data) => {
-  const response = await API.put(`/inventory/${batchId}`, data);
+  const response = await API.put(`/inventory/edit/${batchId}`, data);
 
   return response.data;
 };
@@ -31,4 +31,10 @@ export const getProductBatches = async (productId) => {
   const response = await API.get(`/inventory/${productId}`);
 
   return response.data;
+};
+
+export const getCategories = async () => {
+  const { data } = await API.get("/inventory/categories");
+
+  return data.categories;
 };

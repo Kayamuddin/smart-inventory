@@ -2,6 +2,7 @@ import Product from "../models/Product.model.js";
 import Inventory from "../models/Inventory.model.js";
 import sendEmail from "../utils/sendEmail.js";
 import ApiError from "../utils/ApiError.js";
+import dayjs from "dayjs";
 
 export const sendExpiryMail = async (email, product, batch, expiryDate) => {
   await sendEmail(
@@ -39,18 +40,39 @@ export const sendExpiryMail = async (email, product, batch, expiryDate) => {
 };
 
 export const addProductInventory = async (data, supplierId) => {
+  const productName = data.name.trim();
+  let status = "ACTIVE";
+  const expiry = dayjs(data.expiryDate);
+  const daysLeft = expiry.diff(dayjs(), "day");
+
   let product = await Product.findOne({
-    name: data.name,
     supplier: supplierId,
+    name: new RegExp(`^${productName}$`, "i"),
   });
 
   if (!product) {
     product = await Product.create({
-      name: data.name,
+      name: productName,
       category: data.category,
       supplier: supplierId,
       unit: data.unit,
     });
+  }
+
+  const batchExists = await Inventory.findOne({
+    batchNumber: data.batchNumber,
+  });
+
+  if (batchExists) {
+    throw new ApiError(400, "Batch number already exists");
+  }
+
+  if (daysLeft <= 0) {
+    status = "EXPIRED";
+  } else if (daysLeft > 0 && daysLeft <= 7) {
+    status = "EXPIRING";
+  } else if (daysLeft > 7) {
+    status = "ACTIVE";
   }
 
   const inventory = await Inventory.create({
@@ -60,6 +82,7 @@ export const addProductInventory = async (data, supplierId) => {
     buyingPrice: data.buyingPrice,
     manufactureDate: data.manufactureDate,
     expiryDate: data.expiryDate,
+    status: status,
   });
 
   return inventory;
@@ -93,6 +116,10 @@ export const getInventoryService = async (req) => {
 
   pipeline.push({
     $match: {
+      ...(req.user.role === "supplier" && {
+        "product.supplier": req.user._id,
+      }),
+
       ...(search && {
         "product.name": {
           $regex: search,
@@ -104,6 +131,10 @@ export const getInventoryService = async (req) => {
       ...(category && {
         "product.category": category,
       }),
+
+      status: {
+        $in: ["ACTIVE", "EXPIRING"],
+      },
     },
   });
 
@@ -182,24 +213,41 @@ export const getInventoryByIdService = async (productId, supplierId) => {
   });
 
   if (!product) {
-    throw new ApiError("Product not found.", 404);
+    throw new ApiError(404, "Product not found.");
   }
 
   return product;
 };
 
-export const updateInventoryService = async (productId, data, supplierId) => {
+export const updateInventoryService = async (productId, data, editorId) => {
   const product = await Inventory.findOne({
     _id: productId,
-    supplier: supplierId,
   });
 
   if (!product) {
-    throw new ApiError("Product not found.", 404);
+    throw new ApiError(404, "Product not found.");
   }
 
-  product.name = data.name;
-  product.category = data.category;
+  let status = "ACTIVE";
+  const expiry = dayjs(data.expiryDate);
+  const daysLeft = expiry.diff(dayjs(), "day");
+
+  if (daysLeft <= 0) {
+    status = "EXPIRED";
+  } else if (daysLeft > 0 && daysLeft <= 7) {
+    status = "EXPIRING";
+  } else if (daysLeft > 7) {
+    status = "ACTIVE";
+  }
+
+  product.quantity = data.quantity;
+  product.buyingPrice = data.buyingPrice;
+  product.manufactureDate = data.manufactureDate;
+  product.expiryDate = data.expiryDate;
+  product.status = status;
+  product.editHistory.push({
+    editor: editorId,
+  });
 
   await product.save();
 
@@ -213,7 +261,7 @@ export const deleteBatchService = async (batchId, supplierId) => {
   });
 
   if (!product) {
-    throw new ApiError("Batch not found.", 404);
+    throw new ApiError(404, "Batch not found.");
   }
 
   product.batches = product.batches.filter(

@@ -21,10 +21,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import dayjs from "dayjs";
 import DeleteBatchDialog from "./DeleteBatchDialog.jsx";
+import EditBatchModal from "./EditBatchModal.jsx";
 
 export default function InventoryTable({ products, loading, refresh }) {
   const [openRows, setOpenRows] = useState({});
   const [selectedBatch, setSelectedBatch] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const toggleRow = (id) => {
@@ -52,7 +54,7 @@ export default function InventoryTable({ products, loading, refresh }) {
 
   if (loading)
     return (
-      <div className="flex justify-content py-5">
+      <div className="flex justify-center py-5">
         <CircularProgress />
       </div>
     );
@@ -153,7 +155,12 @@ export default function InventoryTable({ products, loading, refresh }) {
                                   </TableCell>
 
                                   <TableCell>
-                                    <IconButton>
+                                    <IconButton
+                                      onClick={() => {
+                                        setSelectedBatch(batch);
+                                        setEditOpen(true);
+                                      }}
+                                    >
                                       <EditIcon color="primary" />
                                     </IconButton>
 
@@ -184,6 +191,15 @@ export default function InventoryTable({ products, loading, refresh }) {
       <DeleteBatchDialog
         open={deleteOpen}
         handleClose={() => setDeleteOpen(false)}
+        batch={selectedBatch}
+        refresh={refresh}
+      />
+      <EditBatchModal
+        open={editOpen}
+        handleClose={() => {
+          setEditOpen(false);
+          setSelectedBatch(null);
+        }}
         batch={selectedBatch}
         refresh={refresh}
       />

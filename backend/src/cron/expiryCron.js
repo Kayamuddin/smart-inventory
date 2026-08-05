@@ -20,7 +20,7 @@ cron.schedule("0 0 * * *", async () => {
     const daysLeft = expiry.diff(today, "day");
     const supplier = await User.findById(item.product.supplier);
 
-    if (daysLeft === 7) {
+    if (daysLeft > 0 && daysLeft <= 7) {
       await sendExpiryMail(
         supplier.email,
         item.product.name,

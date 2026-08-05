@@ -5,7 +5,8 @@ import {
   addInventory,
   updateBatch,
   deleteBatch,
-} from "../pages/inventory/index.js";
+  getCategories,
+} from "../services/inventory.service.js";
 
 export default function useInventory() {
   const [inventory, setInventory] = useState([]);
@@ -17,6 +18,7 @@ export default function useInventory() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("");
+  const [categoriesData, setCategoriesData] = useState([]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -58,6 +60,19 @@ export default function useInventory() {
       setLoading(false);
     }
   }, [pagination.page, pagination.limit, debouncedSearch, category]);
+
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories();
+      setCategoriesData(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     loadInventory();
@@ -135,6 +150,7 @@ export default function useInventory() {
 
     search,
     category,
+    categoriesData,
 
     setSearch,
     setCategory,

@@ -1,8 +1,14 @@
-import { useEffect, useState } from "react";
-import { getAllUSers, deleteUser, updateUser, createUser } from "./index.js";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { showToast } from "../../redux/slice/toastSlice.js";
-import { MoreHoriz } from "@mui/icons-material";
+import {
+  MoreHoriz,
+  Add as AddIcon,
+  VisibilityOff,
+  Visibility,
+  Refresh,
+  ExpandMore as ExpandMoreIcon,
+} from "@mui/icons-material";
 import {
   Dialog,
   IconButton,
@@ -16,12 +22,44 @@ import {
   FormControl,
   InputLabel,
   Select,
+  CircularProgress,
+  InputAdornment,
+  Typography,
+  Grid,
+  Pagination,
+  TableContainer,
+  TableHead,
+  Table,
+  TableRow,
+  TableCell,
+  TableBody,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import { PenLine, Trash2 } from "lucide-react";
+import useUser from "../../hooks/useUser.js";
 
 function Users() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    loading,
+    editUser,
+    addUser,
+    removeUser,
+    searchUser,
+    refreshUsers,
+    user,
+    totalData,
+    pagination,
+    setPagination,
+    category,
+    categoriesData,
+    filterByCategory,
+  } = useUser();
+
+  const [search, setSearch] = useState("");
+  // const [users, setusers] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
   const [open, setOpen] = useState(false);
@@ -32,26 +70,6 @@ function Users() {
     password: "",
     role: "",
   });
-
-  useEffect(() => {
-    async function loadUsers() {
-      try {
-        setLoading(true);
-        const data = await getAllUSers();
-        setUsers(data || []);
-      } catch (err) {
-        dispatch(
-          showToast([
-            err.response?.data?.message || "Failed to fetch users",
-            "error",
-          ]),
-        );
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadUsers();
-  }, [dispatch]);
 
   const handleMenuOpen = (event, user) => {
     setAnchorEl(event.currentTarget);
@@ -80,21 +98,11 @@ function Users() {
     try {
       if (selectedUser) {
         // Update User
-        const response = await updateUser(selectedUser._id, formData);
-
-        setUsers((prev) =>
-          prev.map((user) =>
-            user._id === selectedUser._id ? response.user : user,
-          ),
-        );
-
+        await editUser(selectedUser._id, formData);
         dispatch(showToast(["User updated successfully", "success"]));
       } else {
         // Create User
-        const response = await createUser(formData);
-
-        setUsers((prev) => [response.user, ...prev]);
-
+        await addUser(formData);
         dispatch(showToast(["User created successfully", "success"]));
       }
 
@@ -110,10 +118,7 @@ function Users() {
     if (!selectedUser) return;
 
     try {
-      await deleteUser(selectedUser._id);
-
-      setUsers((prev) => prev.filter((user) => user._id !== selectedUser._id));
-
+      await removeUser(selectedUser._id);
       dispatch(showToast(["User deleted successfully", "success"]));
 
       handleMenuClose();
@@ -142,82 +147,207 @@ function Users() {
   };
 
   return (
-    <div>
-      <div className="flex justify-end mb-4">
+    <div className="w-full h-[calc(100vh-64px)] p-4 flex flex-col">
+      <Typography variant="h4" fontWeight={700} mb={3}>
+        Manage Users
+      </Typography>
+
+      <Grid container spacing={2} mb={3}>
+        <Grid size={6} className="bg-white text-black rounded text-center">
+          <Typography>Total Users</Typography>
+
+          <Typography variant="h4">{totalData.totalUser}</Typography>
+        </Grid>
+        <Grid size={6} className="bg-white text-black rounded text-center">
+          <Typography>Total Admin</Typography>
+
+          <Typography variant="h4">{totalData.totalAdmin}</Typography>
+        </Grid>
+
+        <Grid size={4} className="bg-white text-black rounded text-center">
+          <Typography>Total Supplier</Typography>
+
+          <Typography variant="h4">{totalData.totalSupplier}</Typography>
+        </Grid>
+        <Grid size={4} className="bg-white text-black rounded text-center">
+          <Typography>Total Employee</Typography>
+
+          <Typography variant="h4">{totalData.totalEmployee}</Typography>
+        </Grid>
+        <Grid size={4} className="bg-white text-black rounded text-center">
+          <Typography>Total Customer</Typography>
+
+          <Typography variant="h4">{totalData.totalCustomer}</Typography>
+        </Grid>
+      </Grid>
+
+      <div className="my-3 flex items-center justify-between gap-3">
+        <div className="flex gap-3 w-full">
+          <input
+            placeholder="Search User by Email..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              searchUser(e.target.value);
+            }}
+            className="h-9 max-w-75 w-full rounded border border-gray-300 bg-white px-3 text-black outline-none focus:border-blue-500"
+          />
+
+          <FormControl size="small" sx={{ width: "100%", maxWidth: 180 }}>
+            <Select
+              value={category}
+              displayEmpty
+              onChange={(e) => filterByCategory(e.target.value)}
+              renderValue={(selected) =>
+                selected || (
+                  <span style={{ color: "#888" }}>All Categories</span>
+                )
+              }
+              className="bg-white text-black"
+            >
+              <MenuItem value="">All Categories</MenuItem>
+
+              {categoriesData.map((cat) => (
+                <MenuItem key={cat} value={cat}>
+                  {cat}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <IconButton
+            onClick={refreshUsers}
+            sx={{
+              height: 36,
+              width: 36,
+              flexShrink: 0,
+            }}
+          >
+            <Refresh
+              className="bg-white text-black"
+              sx={{
+                height: 36,
+                width: 36,
+              }}
+            />
+          </IconButton>
+        </div>
         <Button
           variant="contained"
+          startIcon={<AddIcon />}
           onClick={(e) => {
-            e.currentTarget.blur(); // remove focus
+            e.currentTarget.blur();
             handleAddUser();
+          }}
+          sx={{
+            height: 36,
+            whiteSpace: "nowrap",
+            textTransform: "none",
+            flexShrink: 0,
           }}
         >
           Add User
         </Button>
       </div>
+
       {loading ? (
-        <div>loading...</div>
+        <div className="flex flex-1 justify-center w-full items-center">
+          <CircularProgress />
+        </div>
+      ) : user.length === 0 ? (
+        <div className="text-white text-center py-3">No users found.</div>
       ) : (
-        <div className="overflow-x-auto scrollbar-hide text-white border border-gray-200 rounded-lg shadow">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-3 py-1 not-md:text-xs md:py-1 text-left">
-                  Name
-                </th>
-                <th className="px-3 py-1 not-md:text-xs md:py-1 text-left">
-                  Email
-                </th>
-                <th className="px-3 py-1 not-md:text-xs md:py-1 text-left">
-                  Role
-                </th>
-                <th className="px-3 py-1 not-md:text-xs md:py-1 text-left">
-                  Created At
-                </th>
-                <th className="px-3 py-1 not-md:text-xs md:py-1 text-left">
-                  Actions
-                </th>
-              </tr>
-            </thead>
+        <>
+          <TableContainer
+            sx={{
+              backgroundColor: "white",
+              display: { xs: "none", md: "block" },
+            }}
+          >
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Role</TableCell>
+                  <TableCell>CreatedAt</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {user.map((user) => (
+                  <TableRow key={user._id}>
+                    <TableCell>{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>
+                      {new Date(user.createdAt).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        className="not-md:text-xs not-md:font-semibold md:py-1"
+                        onClick={(e) => {
+                          e.currentTarget.blur(); // remove focus
+                          handleMenuOpen(e, user);
+                        }}
+                      >
+                        <MoreHoriz fontSize="large" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Grid
+            container
+            spacing={2}
+            sx={{
+              display: { xs: "flex", md: "none" },
+              gap: 0,
+            }}
+          >
+            {user.map((user) => (
+              <Grid size={{ xs: 12 }} key={user._id}>
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography fontWeight={600}>{user.email}</Typography>
+                  </AccordionSummary>
 
-            <tbody>
-              {users.map((user) => (
-                <tr
-                  key={user._id}
-                  className="border-t border-gray-400 cursor-default"
-                >
-                  <td className="px-3 py-1 not-md:text-xs not-md:font-semibold md:py-1">
-                    {user.name}
-                  </td>
+                  <AccordionDetails>
+                    <Typography>
+                      <strong>Name:</strong> {user.name}
+                    </Typography>
 
-                  <td className="px-3 py-1 not-md:text-xs not-md:font-semibold md:py-1">
-                    {user.email}
-                  </td>
+                    <Typography>
+                      <strong>Role:</strong> {user.role}
+                    </Typography>
 
-                  <td className="px-3 py-1 not-md:text-xs not-md:font-semibold md:py-1">
-                    {user.role}
-                  </td>
+                    <Typography>
+                      <strong>Created:</strong>{" "}
+                      {new Date(user.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </Typography>
 
-                  <td className="px-3 py-1 not-md:text-xs not-md:font-semibold md:py-1">
-                    {new Date(user.createdAt).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </td>
-                  <td className="px-3 py-1 not-md:text-xs not-md:font-semibold md:py-1">
                     <IconButton
                       onClick={(e) => {
-                        e.currentTarget.blur(); // remove focus
+                        e.currentTarget.blur();
                         handleMenuOpen(e, user);
                       }}
                     >
-                      <MoreHoriz className="text-white pl-1" fontSize="large" />
+                      <MoreHoriz />
                     </IconButton>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </AccordionDetails>
+                </Accordion>
+              </Grid>
+            ))}
+          </Grid>
           <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
@@ -242,8 +372,53 @@ function Users() {
               Delete
             </MenuItem>
           </Menu>
-        </div>
+        </>
       )}
+      <div className="mt-4 flex items-center justify-between">
+        <FormControl size="small">
+          <Select
+            value={pagination.limit}
+            onChange={(e) =>
+              setPagination((prev) => ({
+                ...prev,
+                page: 1,
+                limit: Number(e.target.value),
+              }))
+            }
+            className="bg-white text-black "
+          >
+            <MenuItem value={10}>10</MenuItem>
+            <MenuItem value={20}>20</MenuItem>
+            <MenuItem value={50}>50</MenuItem>
+            <MenuItem value={100}>100</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Pagination
+          page={pagination.page}
+          count={pagination.totalPages}
+          color="primary"
+          onChange={(e, page) =>
+            setPagination((prev) => ({
+              ...prev,
+              page,
+            }))
+          }
+          sx={{
+            "& .MuiPaginationItem-root": {
+              color: "#fff",
+              borderColor: "#475569",
+            },
+            "& .Mui-selected": {
+              backgroundColor: "#2563eb !important",
+              color: "#fff",
+            },
+            "& .MuiPaginationItem-root:hover": {
+              backgroundColor: "#1e293b",
+            },
+          }}
+        />
+      </div>
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -283,6 +458,7 @@ function Users() {
             fullWidth
             label="Password"
             placeholder="Enter the New Password"
+            type={showPassword ? "text" : "password"}
             value={formData.password}
             onChange={(e) =>
               setFormData({
@@ -290,6 +466,20 @@ function Users() {
                 password: e.target.value,
               })
             }
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
           <FormControl fullWidth margin="normal">
             <InputLabel>Role</InputLabel>

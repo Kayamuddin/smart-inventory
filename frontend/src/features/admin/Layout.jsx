@@ -25,7 +25,7 @@ function Layout() {
       >
         <Header setMobileOpen={setMobileOpen} setCollapsed={setCollapsed} />
 
-        <main className="flex-1 overflow-y-auto p-4 text-white">
+        <main className="flex-1 overflow-y-auto text-white">
           <Outlet />
         </main>
       </div>

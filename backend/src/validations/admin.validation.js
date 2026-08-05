@@ -33,14 +33,12 @@ export const createUserValidation = [
   body("role")
     .notEmpty()
     .withMessage("Role is required")
-    .isIn(["admin", "user"])
-    .withMessage("Role must be either admin or user"),
+    .isIn(["admin", "supplier", "employee", "customer"])
+    .withMessage("Role must be either admin, supplier, employee, or customer"),
 ];
 
 export const updateUserValidation = [
-  param("id")
-    .isMongoId()
-    .withMessage("Invalid user id"),
+  param("id").isMongoId().withMessage("Invalid user id"),
 
   body("name")
     .optional()
@@ -69,13 +67,12 @@ export const updateUserValidation = [
     .withMessage("Password must contain at least one special character"),
 
   body("role")
-    .optional()
-    .isIn(["admin", "user"])
-    .withMessage("Role must be either admin or user"),
+    .notEmpty()
+    .withMessage("Role is required")
+    .isIn(["admin", "supplier", "employee", "customer"])
+    .withMessage("Role must be either admin, supplier, employee, or customer"),
 ];
 
 export const deleteUserValidation = [
-  param("id")
-    .isMongoId()
-    .withMessage("Invalid user id"),
+  param("id").isMongoId().withMessage("Invalid user id"),
 ];

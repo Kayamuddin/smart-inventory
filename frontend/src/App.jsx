@@ -6,9 +6,11 @@ import ResetPassword from "./pages/ResetPassword.jsx";
 import ProtectedRoute from "./components/ProtectedRoutes.jsx";
 import Toast from "./components/Toast.jsx";
 import Users from "./pages/admin/Users.jsx";
-import Layout from "./features/admin/Layout.jsx";
-import Dashboard from "./pages/admin/Dashboard.jsx";
-import Inventory from "./pages/inventory/Inventory.jsx";
+import AdminLayout from "./features/admin/Layout.jsx";
+import SupplierLayout from "./features/supplier/Layout.jsx";
+import AdminDashboard from "./pages/admin/Dashboard.jsx";
+import SupplierDashboard from "./pages/supplier/Dashboard.jsx";
+import Inventory from "./pages/admin/Inventory.jsx";
 
 function App() {
   return (
@@ -21,9 +23,13 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Home />} />
-          <Route path="/admin" element={<Layout />}>
-            <Route index path="dashboard" element={<Dashboard />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<Users />} />
+            <Route path="inventory" element={<Inventory />} />
+          </Route>
+          <Route path="/supplier" element={<SupplierLayout />}>
+            <Route index path="dashboard" element={<SupplierDashboard />} />
             <Route path="inventory" element={<Inventory />} />
           </Route>
         </Route>

@@ -13,7 +13,7 @@ import {
 import { useDispatch } from "react-redux";
 
 import { showToast } from "../../redux/slice/toastSlice";
-import { deleteBatch } from "../../pages/inventory/index.js";
+import { deleteBatch } from "../../services/inventory.service.js";
 
 export default function DeleteBatchDialog({
   open,

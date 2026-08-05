@@ -13,17 +13,33 @@ export const addInventoryValidation = [
 ];
 
 export const updateInventoryValidation = [
-  body("name")
-    .trim()
+  body("quantity")
     .notEmpty()
-    .withMessage("Product name is required.")
-    .isLength({ min: 2, max: 100 })
-    .withMessage("Product name must be between 2 and 100 characters."),
+    .withMessage("Quantity is required.")
+    .isInt({ min: 1 })
+    .withMessage("Quantity must be at least 1."),
 
-  body("category")
-    .trim()
+  body("buyingPrice")
     .notEmpty()
-    .withMessage("Category is required.")
-    .isLength({ max: 50 })
-    .withMessage("Category must not exceed 50 characters."),
+    .withMessage("Buying price is required.")
+    .isFloat({ min: 0 })
+    .withMessage("Buying price must be a valid positive number."),
+
+  body("manufactureDate")
+    .notEmpty()
+    .withMessage("Manufacture date is required.")
+    .isISO8601()
+    .withMessage("Invalid manufacture date."),
+
+  body("expiryDate")
+    .notEmpty()
+    .withMessage("Expiry date is required.")
+    .isISO8601()
+    .withMessage("Invalid expiry date.")
+    .custom((value, { req }) => {
+      if (new Date(value) <= new Date(req.body.manufactureDate)) {
+        throw new Error("Expiry date must be after manufacture date.");
+      }
+      return true;
+    }),
 ];

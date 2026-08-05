@@ -32,6 +32,20 @@ const inventorySchema = new mongoose.Schema(
 
     manufactureDate: Date,
 
+    editHistory: [
+      {
+        editor: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        editedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     status: {
       type: String,
       enum: ["ACTIVE", "EXPIRING", "EXPIRED"],

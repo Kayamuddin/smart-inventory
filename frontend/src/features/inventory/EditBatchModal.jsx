@@ -10,10 +10,9 @@ import {
   CircularProgress,
 } from "@mui/material";
 
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 
-import { updateBatch } from "../../pages/inventory/index.js";
+import { updateBatch } from "../../services/inventory.service.js";
 import { useDispatch } from "react-redux";
 import { showToast } from "../../redux/slice/toastSlice";
 
@@ -99,8 +98,6 @@ export default function EditBatchModal({ open, handleClose, batch, refresh }) {
 
         buyingPrice: Number(form.buyingPrice),
 
-        sellingPrice: Number(form.sellingPrice),
-
         manufactureDate: dayjs(form.manufactureDate).format("YYYY-MM-DD"),
 
         expiryDate: dayjs(form.expiryDate).format("YYYY-MM-DD"),
@@ -127,21 +124,23 @@ export default function EditBatchModal({ open, handleClose, batch, refresh }) {
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle>Edit Inventory Batch</DialogTitle>
 
-      <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={6}>
+      <DialogContent dividers>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Batch Number"
               value={batch?.batchNumber || ""}
-              InputProps={{
-                readOnly: true,
+              slotProps={{
+                htmlInput: {
+                  readOnly: true,
+                },
               }}
               helperText="Batch number cannot be changed."
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Quantity"
@@ -152,7 +151,7 @@ export default function EditBatchModal({ open, handleClose, batch, refresh }) {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={12}>
             <TextField
               fullWidth
               label="Buying Price"
@@ -163,40 +162,47 @@ export default function EditBatchModal({ open, handleClose, batch, refresh }) {
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Selling Price"
-              name="sellingPrice"
-              type="number"
-              value={form.sellingPrice}
-              onChange={handleChange}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <label
+              htmlFor="manufactureDate"
+              className="block mb-1 text-sm font-medium text-gray-700"
+            >
+              Manufacture Date
+            </label>
+
+            <input
+              id="manufactureDate"
+              type="date"
+              value={
+                form.manufactureDate
+                  ? dayjs(form.manufactureDate).format("YYYY-MM-DD")
+                  : ""
+              }
+              onClick={(e) => e.target.showPicker?.()}
+              onChange={(e) => handleDate("manufactureDate", e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-3"
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
-            <DatePicker
-              label="Manufacture Date"
-              value={form.manufactureDate}
-              onChange={(value) => handleDate("manufactureDate", value)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                },
-              }}
-            />
-          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <label
+              htmlFor="expiryDate"
+              className="block mb-1 text-sm font-medium text-gray-700"
+            >
+              Expiry Date
+            </label>
 
-          <Grid item xs={12} md={6}>
-            <DatePicker
-              label="Expiry Date"
-              value={form.expiryDate}
-              onChange={(value) => handleDate("expiryDate", value)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                },
-              }}
+            <input
+              id="expiryDate"
+              type="date"
+              value={
+                form.expiryDate
+                  ? dayjs(form.expiryDate).format("YYYY-MM-DD")
+                  : ""
+              }
+              onClick={(e) => e.target.showPicker?.()}
+              onChange={(e) => handleDate("expiryDate", e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-3"
             />
           </Grid>
         </Grid>

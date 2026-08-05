@@ -1,3 +1,4 @@
+import Product from "../models/Product.model.js";
 import {
   addProductInventory,
   getInventoryByIdService,
@@ -39,7 +40,7 @@ export const getInventory = async (req, res, next) => {
 
 export const getInventoryById = async (req, res, next) => {
   try {
-    const supplierId = req.user.id;
+    const { supplierId } = req.body;
     const { id } = req.params;
 
     const product = await getInventoryByIdService(id, supplierId);
@@ -56,15 +57,33 @@ export const getInventoryById = async (req, res, next) => {
 
 export const updateInventory = async (req, res, next) => {
   try {
-    const supplierId = req.user.id;
+    const editorId = req.user.id;
     const { id } = req.params;
 
-    const product = await updateInventoryService(id, req.body, supplierId);
+    const product = await updateInventoryService(id, req.body, editorId);
 
     return res.status(200).json({
       success: true,
       message: "Product updated successfully.",
       data: product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCategories = async (req, res, next) => {
+  try {
+    const categories = await Product.distinct("category", {
+      category: { $ne: "" },
+      ...(req.user.role != "admin" && {
+        supplier: req.user._id,
+      }),
+    });
+
+    res.status(200).json({
+      success: true,
+      categories: categories.sort(),
     });
   } catch (error) {
     next(error);

@@ -1,10 +1,21 @@
-import { NavLink } from "react-router-dom";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import PeopleIcon from "@mui/icons-material/People";
-import InventoryIcon from "@mui/icons-material/Inventory";
-import SettingsIcon from "@mui/icons-material/Settings";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import {
+  AccountCircle as AccountCircleIcon,
+  Settings as SettingsIcon,
+  Inventory as InventoryIcon,
+  People as PeopleIcon,
+  Dashboard as DashboardIcon,
+  Logout as LogoutIcon,
+} from "@mui/icons-material";
+import { useState } from "react";
+import { Menu, MenuItem } from "@mui/material";
+import { useDispatch } from "react-redux";
+import { logout } from "../../redux/slice/authSlice";
 
 function SideBar({ mobileOpen, setMobileOpen, collapsed }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const menuItems = [
     {
       name: "Dashboard",
@@ -78,24 +89,52 @@ function SideBar({ mobileOpen, setMobileOpen, collapsed }) {
           ))}
         </nav>
         <div className="border-t border-slate-700 p-2">
-          <NavLink
-            to="/admin/settings"
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) =>
-              `
+          <div
+            onClick={(event) => setAnchorEl(event.currentTarget)}
+            className="
                 flex items-center
                 gap-3
                 px-4
                 py-3
                 rounded-lg
                 transition-colors
-                ${isActive ? "bg-slate-800" : "hover:bg-slate-900"}
-              `
-            }
+              hover:bg-slate-900
+                cursor-pointer
+              "
           >
-            <SettingsIcon />
-            {!collapsed && <span>Settings</span>}
-          </NavLink>
+            <AccountCircleIcon />
+            {!collapsed && (
+              <span className="text-white">
+                {typeof localStorage.getItem("user") === "string"
+                  ? JSON.parse(localStorage.getItem("user")).name
+                  : localStorage.getItem("user")?.name || "User"}
+              </span>
+            )}
+          </div>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl) || false}
+            onClose={() => setAnchorEl(null)}
+          >
+            <MenuItem
+              onClick={() => {
+                setAnchorEl(null);
+                dispatch(logout());
+                navigate("/login", { replace: true });
+              }}
+            >
+              <LogoutIcon sx={{ mr: 1 }} />
+              Logout
+            </MenuItem>
+            <MenuItem
+              component={Link}
+              to="/admin/settings"
+              onClick={() => setAnchorEl(null)}
+            >
+              <SettingsIcon sx={{ mr: 1 }} />
+              Settings
+            </MenuItem>
+          </Menu>
         </div>
       </aside>
     </>
