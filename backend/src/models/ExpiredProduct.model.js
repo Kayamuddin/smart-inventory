@@ -4,7 +4,7 @@ const expiredProductSchema = new mongoose.Schema(
   {
     product: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Inventory",
+      ref: "Product",
     },
 
     batchNumber: String,
@@ -14,11 +14,6 @@ const expiredProductSchema = new mongoose.Schema(
     buyingPrice: Number,
 
     expiryDate: Date,
-
-    expiredAt: {
-      type: Date,
-      default: Date.now,
-    },
   },
   {
     timestamps: true,

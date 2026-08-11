@@ -26,6 +26,11 @@ function SideBar({ mobileOpen, setMobileOpen, collapsed }) {
       path: "/supplier/inventory",
       icon: <InventoryIcon />,
     },
+    {
+      name: "Expired Products",
+      path: "/supplier/expiredProducts",
+      icon: <InventoryIcon />,
+    },
   ];
 
   return (
@@ -54,7 +59,7 @@ function SideBar({ mobileOpen, setMobileOpen, collapsed }) {
       >
         {/* Logo */}
         <div className="h-16 flex items-center px-4 border-b border-slate-700">
-          {!collapsed && <h2 className="font-bold text-lg">Admin Panel</h2>}
+          {!collapsed && <h2 className="font-bold text-lg">Supplier Panel</h2>}
         </div>
 
         {/* Menu */}

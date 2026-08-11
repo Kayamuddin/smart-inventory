@@ -32,6 +32,11 @@ function SideBar({ mobileOpen, setMobileOpen, collapsed }) {
       path: "/admin/inventory",
       icon: <InventoryIcon />,
     },
+    {
+      name: "Expired Products",
+      path: "/admin/expiredProducts",
+      icon: <InventoryIcon />,
+    },
   ];
 
   return (

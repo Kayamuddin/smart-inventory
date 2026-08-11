@@ -9,8 +9,6 @@ import User from "../models/User.model.js";
 import { sendExpiryMail } from "../services/inventory.service.js";
 
 cron.schedule("0 0 * * *", async () => {
-  console.log("Checking expiry products...");
-
   const today = dayjs();
 
   const inventories = await Inventory.find().populate("product");
@@ -32,6 +30,7 @@ cron.schedule("0 0 * * *", async () => {
     if (daysLeft <= 0) {
       await ExpiredProduct.create({
         product: item.product._id,
+        owner: supplier._id,
         batchNumber: item.batchNumber,
         quantity: item.quantity,
         buyingPrice: item.buyingPrice,
@@ -39,6 +38,12 @@ cron.schedule("0 0 * * *", async () => {
       });
 
       await Inventory.findByIdAndDelete(item._id);
+      const isProductExist = await Inventory.find({
+        product: item.product._id,
+      });
+      if (!isProductExist) {
+        await Product.findByIdAndDelete(item.product._id);
+      }
     }
   }
 });

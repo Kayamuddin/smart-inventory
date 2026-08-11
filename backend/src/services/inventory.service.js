@@ -3,6 +3,7 @@ import Inventory from "../models/Inventory.model.js";
 import sendEmail from "../utils/sendEmail.js";
 import ApiError from "../utils/ApiError.js";
 import dayjs from "dayjs";
+import generateBatchNumber from "../utils/generateBatchNumber.js";
 
 export const sendExpiryMail = async (email, product, batch, expiryDate) => {
   await sendEmail(
@@ -44,6 +45,8 @@ export const addProductInventory = async (data, supplierId) => {
   let status = "ACTIVE";
   const expiry = dayjs(data.expiryDate);
   const daysLeft = expiry.diff(dayjs(), "day");
+  let batchNumber = generateBatchNumber();
+  let batchExists;
 
   let product = await Product.findOne({
     supplier: supplierId,
@@ -59,13 +62,17 @@ export const addProductInventory = async (data, supplierId) => {
     });
   }
 
-  const batchExists = await Inventory.findOne({
-    batchNumber: data.batchNumber,
-  });
-
-  if (batchExists) {
-    throw new ApiError(400, "Batch number already exists");
+  async function checkBatchNumber() {
+    batchExists = await Inventory.findOne({
+      batchNumber: batchNumber,
+    });
+    if (batchExists) {
+      batchNumber = generateBatchNumber();
+      checkBatchNumber();
+    }
   }
+
+  checkBatchNumber();
 
   if (daysLeft <= 0) {
     status = "EXPIRED";
@@ -77,7 +84,7 @@ export const addProductInventory = async (data, supplierId) => {
 
   const inventory = await Inventory.create({
     product: product._id,
-    batchNumber: data.batchNumber,
+    batchNumber: batchNumber,
     quantity: data.quantity,
     buyingPrice: data.buyingPrice,
     manufactureDate: data.manufactureDate,
@@ -274,4 +281,96 @@ export const deleteBatchService = async (batchId, supplierId) => {
   }
 
   await product.save();
+};
+
+export const getExpiringProductService = async (req) => {
+  const pipeline = [];
+
+  pipeline.push({
+    $lookup: {
+      from: "products",
+      localField: "product",
+      foreignField: "_id",
+      as: "product",
+    },
+  });
+
+  pipeline.push({
+    $unwind: "$product",
+  });
+
+  if (req.user.role == "admin") {
+    pipeline.push({
+      $lookup: {
+        from: "users",
+        localField: "product.supplier",
+        foreignField: "_id",
+        as: "user",
+      },
+    });
+
+    pipeline.push({
+      $unwind: "$user",
+    });
+  }
+
+  pipeline.push({
+    $match: {
+      ...(req.user.role == "supplier" ||
+        (req.user.role == "employee" && {
+          "product.supplier": req.user._id,
+        })),
+      status: "EXPIRING",
+    },
+  });
+
+  pipeline.push({
+    $facet: {
+      inventory: [
+        {
+          $group: {
+            _id: "$_id",
+
+            name: {
+              $first: "$product.name",
+            },
+
+            ...(req.user.role == "admin" && {
+              email: { $first: "$user.email" },
+            }),
+
+            quantity: { $first: "$quantity" },
+
+            batchNumber: { $first: "$batchNumber" },
+
+            expiryDate: { $first: "$expiryDate" },
+          },
+        },
+
+        {
+          $sort: {
+            name: 1,
+          },
+        },
+      ],
+
+      totals: [
+        {
+          $group: {
+            _id: null,
+            totalBatchCount: {
+              $sum: 1,
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  const result = await Inventory.aggregate(pipeline);
+
+  return {
+    inventory: result[0].inventory,
+    totalBatches: result[0].totals[0]?.totalBatchCount || 0,
+  };
 };

@@ -42,7 +42,6 @@ export default function useUser() {
         search: debouncedSearch,
         category,
       });
-      console.log(response);
 
       setUser(response.users || []);
       setTotalData(response || []);

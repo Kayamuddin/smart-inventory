@@ -10,7 +10,8 @@ import AdminLayout from "./features/admin/Layout.jsx";
 import SupplierLayout from "./features/supplier/Layout.jsx";
 import AdminDashboard from "./pages/admin/Dashboard.jsx";
 import SupplierDashboard from "./pages/supplier/Dashboard.jsx";
-import Inventory from "./pages/admin/Inventory.jsx";
+import Inventory from "./pages/inventory/Inventory.jsx";
+import ExpiredProducts from "./pages/inventory/ExpiredProducts.jsx";
 
 function App() {
   return (
@@ -27,10 +28,12 @@ function App() {
             <Route index path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<Users />} />
             <Route path="inventory" element={<Inventory />} />
+            <Route path="expiredProducts" element={<ExpiredProducts />} />
           </Route>
           <Route path="/supplier" element={<SupplierLayout />}>
             <Route index path="dashboard" element={<SupplierDashboard />} />
             <Route path="inventory" element={<Inventory />} />
+            <Route path="expiredProducts" element={<ExpiredProducts />} />
           </Route>
         </Route>
       </Routes>

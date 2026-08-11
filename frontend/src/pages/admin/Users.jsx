@@ -36,6 +36,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Paper,
 } from "@mui/material";
 import { PenLine, Trash2 } from "lucide-react";
 import useUser from "../../hooks/useUser.js";
@@ -58,7 +59,6 @@ function Users() {
   } = useUser();
 
   const [search, setSearch] = useState("");
-  // const [users, setusers] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -114,11 +114,14 @@ function Users() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!selectedUser) return;
+  const handleDelete = async (user) => {
+    const userToDelete = user || selectedUser;
+
+    if (!userToDelete)
+      return dispatch(showToast(["Select a user to delete", "error"]));
 
     try {
-      await removeUser(selectedUser._id);
+      await removeUser(userToDelete._id);
       dispatch(showToast(["User deleted successfully", "success"]));
 
       handleMenuClose();
@@ -152,33 +155,41 @@ function Users() {
         Manage Users
       </Typography>
 
-      <Grid container spacing={2} mb={3}>
-        <Grid size={6} className="bg-white text-black rounded text-center">
-          <Typography>Total Users</Typography>
+      <Grid
+        container
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(3, 1fr)",
+            md: "repeat(5, 1fr)",
+          },
+          gap: 2,
+        }}
+      >
+        <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
+          <Typography variant="body2">Total Users</Typography>
+          <Typography variant="h5">{totalData.totalUser}</Typography>
+        </Paper>
 
-          <Typography variant="h4">{totalData.totalUser}</Typography>
-        </Grid>
-        <Grid size={6} className="bg-white text-black rounded text-center">
-          <Typography>Total Admin</Typography>
+        <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
+          <Typography variant="body2">Total Admin</Typography>
+          <Typography variant="h5">{totalData.totalAdmin}</Typography>
+        </Paper>
 
-          <Typography variant="h4">{totalData.totalAdmin}</Typography>
-        </Grid>
+        <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
+          <Typography variant="body2">Total Supplier</Typography>
+          <Typography variant="h5">{totalData.totalSupplier}</Typography>
+        </Paper>
 
-        <Grid size={4} className="bg-white text-black rounded text-center">
-          <Typography>Total Supplier</Typography>
+        <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
+          <Typography variant="body2">Total Employee</Typography>
+          <Typography variant="h5">{totalData.totalEmployee}</Typography>
+        </Paper>
 
-          <Typography variant="h4">{totalData.totalSupplier}</Typography>
-        </Grid>
-        <Grid size={4} className="bg-white text-black rounded text-center">
-          <Typography>Total Employee</Typography>
-
-          <Typography variant="h4">{totalData.totalEmployee}</Typography>
-        </Grid>
-        <Grid size={4} className="bg-white text-black rounded text-center">
-          <Typography>Total Customer</Typography>
-
-          <Typography variant="h4">{totalData.totalCustomer}</Typography>
-        </Grid>
+        <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
+          <Typography variant="body2">Total Customer</Typography>
+          <Typography variant="h5">{totalData.totalCustomer}</Typography>
+        </Paper>
       </Grid>
 
       <div className="my-3 flex items-center justify-between gap-3">
@@ -307,7 +318,7 @@ function Users() {
             spacing={2}
             sx={{
               display: { xs: "flex", md: "none" },
-              gap: 0,
+              gap: 1,
             }}
           >
             {user.map((user) => (
@@ -327,22 +338,32 @@ function Users() {
                     </Typography>
 
                     <Typography>
-                      <strong>Created:</strong>{" "}
+                      <strong>CreatedAt:</strong>{" "}
                       {new Date(user.createdAt).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
                       })}
                     </Typography>
-
-                    <IconButton
-                      onClick={(e) => {
-                        e.currentTarget.blur();
-                        handleMenuOpen(e, user);
-                      }}
-                    >
-                      <MoreHoriz />
-                    </IconButton>
+                    <div>
+                      <Button
+                        startIcon={<PenLine size={16} />}
+                        onClick={() => {
+                          handleEdit(user);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        startIcon={<Trash2 size={16} />}
+                        onClick={() => {
+                          handleDelete(user);
+                        }}
+                        sx={{ color: "red" }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </AccordionDetails>
                 </Accordion>
               </Grid>
@@ -364,7 +385,7 @@ function Users() {
 
             <MenuItem
               onClick={() => {
-                handleDelete();
+                handleDelete(selectedUser);
               }}
               sx={{ color: "red" }}
             >

@@ -33,8 +33,23 @@ export const getProductBatches = async (productId) => {
   return response.data;
 };
 
-export const getCategories = async () => {
-  const { data } = await API.get("/inventory/categories");
+export const getCategories = async (params) => {
+  const { data } = await API.get("/inventory/categories", { params });
 
   return data.categories;
+};
+
+export const getExpiredProductsService = async (params) => {
+  const { data } = await API.get("/inventory/expiredProducts", { params });
+  return data;
+};
+
+export const getExpiringProductsService = async () => {
+  const { data } = await API.get("/inventory/expiringProducts");
+  return data;
+};
+
+export const getExpiredCategoryService = async (params) => {
+  const { data } = await API.get("/inventory/expiredCategories", { params });
+  return data;
 };

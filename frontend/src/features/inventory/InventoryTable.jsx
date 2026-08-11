@@ -12,22 +12,35 @@ import {
   TableRow,
   Typography,
   CircularProgress,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
 
 import dayjs from "dayjs";
 import DeleteBatchDialog from "./DeleteBatchDialog.jsx";
 import EditBatchModal from "./EditBatchModal.jsx";
+import { MoreHoriz } from "@mui/icons-material";
+import { PenLine, Trash2 } from "lucide-react";
 
 export default function InventoryTable({ products, loading, refresh }) {
   const [openRows, setOpenRows] = useState({});
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleMenuOpen = (event, batch) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedBatch(batch);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const toggleRow = (id) => {
     setOpenRows((prev) => ({
@@ -156,6 +169,15 @@ export default function InventoryTable({ products, loading, refresh }) {
 
                                   <TableCell>
                                     <IconButton
+                                      className="not-md:text-xs not-md:font-semibold md:py-1"
+                                      onClick={(e) => {
+                                        e.currentTarget.blur(); // remove focus
+                                        handleMenuOpen(e, batch);
+                                      }}
+                                    >
+                                      <MoreHoriz fontSize="large" />
+                                    </IconButton>
+                                    {/* <IconButton
                                       onClick={() => {
                                         setSelectedBatch(batch);
                                         setEditOpen(true);
@@ -172,7 +194,7 @@ export default function InventoryTable({ products, loading, refresh }) {
                                       }}
                                     >
                                       <DeleteIcon />
-                                    </IconButton>
+                                    </IconButton> */}
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -188,6 +210,30 @@ export default function InventoryTable({ products, loading, refresh }) {
           </TableBody>
         </Table>
       </TableContainer>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem
+          onClick={() => {
+            setEditOpen(true);
+          }}
+        >
+          <PenLine size={16} className="mr-2" />
+          Edit
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            setDeleteOpen(true);
+          }}
+          sx={{ color: "red" }}
+        >
+          <Trash2 size={16} className="mr-2" />
+          Delete
+        </MenuItem>
+      </Menu>
       <DeleteBatchDialog
         open={deleteOpen}
         handleClose={() => setDeleteOpen(false)}
@@ -198,7 +244,6 @@ export default function InventoryTable({ products, loading, refresh }) {
         open={editOpen}
         handleClose={() => {
           setEditOpen(false);
-          setSelectedBatch(null);
         }}
         batch={selectedBatch}
         refresh={refresh}

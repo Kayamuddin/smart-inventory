@@ -3,6 +3,9 @@ import authMiddleware from "../middleware/auth.middleware.js";
 import {
   addInventory,
   getCategories,
+  getExpiredCategories,
+  getExpiredProducts,
+  getExpiringProducts,
   getInventory,
   getInventoryById,
   updateInventory,
@@ -15,6 +18,27 @@ import authorize from "../middleware/authorize.middleware.js";
 import validationMiddleware from "../middleware/validate.middleware.js";
 
 const router = express.Router();
+
+router.get(
+  "/expiredProducts",
+  authMiddleware,
+  authorize("employee", "admin", "supplier"),
+  getExpiredProducts,
+);
+
+router.get(
+  "/expiringProducts",
+  authMiddleware,
+  authorize("employee", "admin", "supplier"),
+  getExpiringProducts,
+);
+
+router.get(
+  "/expiredCategories",
+  authMiddleware,
+  authorize("employee", "admin", "supplier"),
+  getExpiredCategories,
+);
 
 router.use(authMiddleware, authorize("admin", "supplier"));
 

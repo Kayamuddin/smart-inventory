@@ -7,6 +7,7 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  IconButton,
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -17,6 +18,7 @@ import InventoryTable from "../../features/inventory/InventoryTable";
 import AddProductModal from "../../features/inventory/AddProductModal";
 
 import useInventory from "../../hooks/useInventory";
+import { Refresh } from "@mui/icons-material";
 
 export default function Inventory() {
   const {
@@ -104,6 +106,22 @@ export default function Inventory() {
               ))}
             </Select>
           </FormControl>
+          <IconButton
+            onClick={refreshInventory}
+            sx={{
+              height: 36,
+              width: 36,
+              flexShrink: 0,
+            }}
+          >
+            <Refresh
+              className="bg-white text-black"
+              sx={{
+                height: 36,
+                width: 36,
+              }}
+            />
+          </IconButton>
         </div>
 
         <Button

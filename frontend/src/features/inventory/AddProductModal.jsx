@@ -104,7 +104,6 @@ export default function AddProductModal({
 
     try {
       setLoading(true);
-      console.log(form);
 
       const payload = {
         ...form,
@@ -173,7 +172,6 @@ export default function AddProductModal({
                 }));
               }}
               onChange={(event, product) => {
-                console.log(product);
                 if (!product || typeof product === "string") return;
 
                 setForm((prev) => ({
