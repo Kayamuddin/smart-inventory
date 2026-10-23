@@ -80,7 +80,7 @@ function Header({ setMobileOpen, setCollapsed }) {
         onClose={() => setOpenDialog(false)}
         fullWidth
         maxWidth="lg"
-        PaperProps={{
+        paperprops={{
           sx: {
             width: {
               xs: "calc(100% - 16px)",

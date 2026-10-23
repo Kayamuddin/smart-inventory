@@ -47,6 +47,7 @@ function Users() {
     editUser,
     addUser,
     removeUser,
+    search,
     searchUser,
     refreshUsers,
     user,
@@ -58,7 +59,6 @@ function Users() {
     filterByCategory,
   } = useUser();
 
-  const [search, setSearch] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -98,7 +98,7 @@ function Users() {
     try {
       if (selectedUser) {
         // Update User
-        await editUser(selectedUser._id, formData);
+        await editUser(selectedUser, formData);
         dispatch(showToast(["User updated successfully", "success"]));
       } else {
         // Create User
@@ -121,7 +121,7 @@ function Users() {
       return dispatch(showToast(["Select a user to delete", "error"]));
 
     try {
-      await removeUser(userToDelete._id);
+      await removeUser(userToDelete);
       dispatch(showToast(["User deleted successfully", "success"]));
 
       handleMenuClose();
@@ -151,9 +151,9 @@ function Users() {
 
   return (
     <div className="w-full h-[calc(100vh-64px)] p-4 flex flex-col">
-      <Typography variant="h4" fontWeight={700} mb={3}>
+      <div className="text-[1.25rem] sm:text-[2.125rem] font-bold">
         Manage Users
-      </Typography>
+      </div>
 
       <Grid
         container
@@ -168,40 +168,40 @@ function Users() {
       >
         <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
           <Typography variant="body2">Total Users</Typography>
-          <Typography variant="h5">{totalData.totalUser}</Typography>
+          <Typography variant="h5">{totalData.totalUser || 0}</Typography>
         </Paper>
 
         <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
           <Typography variant="body2">Total Admin</Typography>
-          <Typography variant="h5">{totalData.totalAdmin}</Typography>
+          <Typography variant="h5">{totalData.totalAdmin || 0}</Typography>
         </Paper>
 
         <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
           <Typography variant="body2">Total Supplier</Typography>
-          <Typography variant="h5">{totalData.totalSupplier}</Typography>
+          <Typography variant="h5">{totalData.totalSupplier || 0}</Typography>
         </Paper>
 
         <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
           <Typography variant="body2">Total Employee</Typography>
-          <Typography variant="h5">{totalData.totalEmployee}</Typography>
+          <Typography variant="h5">{totalData.totalEmployee || 0}</Typography>
         </Paper>
 
         <Paper sx={{ p: 1.5, textAlign: "center", borderRadius: 2 }}>
           <Typography variant="body2">Total Customer</Typography>
-          <Typography variant="h5">{totalData.totalCustomer}</Typography>
+          <Typography variant="h5">{totalData.totalCustomer || 0}</Typography>
         </Paper>
       </Grid>
 
-      <div className="my-3 flex items-center justify-between gap-3">
+      <div className="my-3 flex items-center flex-col sm:flex-row justify-between gap-3">
         <div className="flex gap-3 w-full">
           <input
             placeholder="Search User by Email..."
             value={search}
             onChange={(e) => {
-              setSearch(e.target.value);
               searchUser(e.target.value);
             }}
-            className="h-9 max-w-75 w-full rounded border border-gray-300 bg-white px-3 text-black outline-none focus:border-blue-500"
+            autoComplete="off"
+            className="h-10 max-w-75 w-full rounded border border-gray-300 bg-white px-3 text-black outline-none focus:border-blue-500"
           />
 
           <FormControl size="small" sx={{ width: "100%", maxWidth: 180 }}>
@@ -255,6 +255,7 @@ function Users() {
             textTransform: "none",
             flexShrink: 0,
           }}
+          className="not-sm:w-full"
         >
           Add User
         </Button>
@@ -271,7 +272,7 @@ function Users() {
           <TableContainer
             sx={{
               backgroundColor: "white",
-              display: { xs: "none", md: "block" },
+              display: { xs: "none", sm: "block" },
             }}
           >
             <Table>
@@ -317,7 +318,7 @@ function Users() {
             container
             spacing={2}
             sx={{
-              display: { xs: "flex", md: "none" },
+              display: { xs: "flex", sm: "none" },
               gap: 1,
             }}
           >
@@ -393,53 +394,53 @@ function Users() {
               Delete
             </MenuItem>
           </Menu>
+          <div className="mt-4 flex items-center justify-between">
+            <FormControl size="small">
+              <Select
+                value={pagination.limit}
+                onChange={(e) =>
+                  setPagination((prev) => ({
+                    ...prev,
+                    page: 1,
+                    limit: Number(e.target.value),
+                  }))
+                }
+                className="bg-white text-black "
+              >
+                <MenuItem value={10}>10</MenuItem>
+                <MenuItem value={20}>20</MenuItem>
+                <MenuItem value={50}>50</MenuItem>
+                <MenuItem value={100}>100</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Pagination
+              page={pagination.page}
+              count={pagination.totalPages}
+              color="primary"
+              onChange={(e, page) =>
+                setPagination((prev) => ({
+                  ...prev,
+                  page,
+                }))
+              }
+              sx={{
+                "& .MuiPaginationItem-root": {
+                  color: "#fff",
+                  borderColor: "#475569",
+                },
+                "& .Mui-selected": {
+                  backgroundColor: "#2563eb !important",
+                  color: "#fff",
+                },
+                "& .MuiPaginationItem-root:hover": {
+                  backgroundColor: "#1e293b",
+                },
+              }}
+            />
+          </div>
         </>
       )}
-      <div className="mt-4 flex items-center justify-between">
-        <FormControl size="small">
-          <Select
-            value={pagination.limit}
-            onChange={(e) =>
-              setPagination((prev) => ({
-                ...prev,
-                page: 1,
-                limit: Number(e.target.value),
-              }))
-            }
-            className="bg-white text-black "
-          >
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={20}>20</MenuItem>
-            <MenuItem value={50}>50</MenuItem>
-            <MenuItem value={100}>100</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Pagination
-          page={pagination.page}
-          count={pagination.totalPages}
-          color="primary"
-          onChange={(e, page) =>
-            setPagination((prev) => ({
-              ...prev,
-              page,
-            }))
-          }
-          sx={{
-            "& .MuiPaginationItem-root": {
-              color: "#fff",
-              borderColor: "#475569",
-            },
-            "& .Mui-selected": {
-              backgroundColor: "#2563eb !important",
-              color: "#fff",
-            },
-            "& .MuiPaginationItem-root:hover": {
-              backgroundColor: "#1e293b",
-            },
-          }}
-        />
-      </div>
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -467,6 +468,7 @@ function Users() {
             fullWidth
             label="Email"
             value={formData.email}
+            autoComplete="off"
             onChange={(e) =>
               setFormData({
                 ...formData,
@@ -481,6 +483,7 @@ function Users() {
             placeholder="Enter the New Password"
             type={showPassword ? "text" : "password"}
             value={formData.password}
+            autoComplete="new-password"
             onChange={(e) =>
               setFormData({
                 ...formData,

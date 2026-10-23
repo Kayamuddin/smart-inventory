@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import ExpiredProduct from "../models/ExpiredProduct.model.js";
 import Product from "../models/Product.model.js";
 import {
@@ -6,16 +7,25 @@ import {
 } from "../services/expiredProducts.service.js";
 import {
   addProductInventory,
+  deductUsedProductService,
+  deleteBatchService,
   getExpiringProductService,
-  getInventoryByIdService,
   getInventoryService,
+  getUsedProductAtTodayService,
   updateInventoryService,
 } from "../services/inventory.service.js";
-import generateBatchNumber from "../utils/generateBatchNumber.js";
 
 export const addInventory = async (req, res, next) => {
+  const session = await mongoose.startSession();
   try {
-    const inventory = await addProductInventory({ ...req.body }, req.user._id);
+    session.startTransaction();
+    const inventory = await addProductInventory(
+      { ...req.body },
+      req.user._id,
+      session,
+    );
+
+    await session.commitTransaction();
 
     return res.status(201).json({
       success: true,
@@ -23,7 +33,10 @@ export const addInventory = async (req, res, next) => {
       inventory,
     });
   } catch (error) {
+    await session.abortTransaction();
     next(error);
+  } finally {
+    await session.endSession();
   }
 };
 
@@ -35,23 +48,6 @@ export const getInventory = async (req, res, next) => {
       success: true,
 
       ...inventory,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getInventoryById = async (req, res, next) => {
-  try {
-    const { supplierId } = req.body;
-    const { id } = req.params;
-
-    const product = await getInventoryByIdService(id, supplierId);
-
-    return res.status(200).json({
-      success: true,
-      message: "Product fetched successfully.",
-      data: product,
     });
   } catch (error) {
     next(error);
@@ -75,12 +71,24 @@ export const updateInventory = async (req, res, next) => {
   }
 };
 
+export const deleteInventory = async (req, res, next) => {
+  try {
+    await deleteBatchService(req);
+    return res.status(204).json({
+      success: true,
+      message: "Batch deleted successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getCategories = async (req, res, next) => {
   try {
     const categories = await Product.distinct("category", {
       category: { $ne: "" },
-      ...(req.user.role != "admin" && {
-        supplier: req.user._id,
+      ...((req.user.role == "supplier" || req.user.role == "employee") && {
+        holder: req.user._id,
       }),
     });
 
@@ -127,6 +135,31 @@ export const getExpiringProducts = async (req, res, next) => {
       success: true,
 
       ...inventory,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deductUsedProduct = async (req, res, next) => {
+  try {
+    const result = await deductUsedProductService(req);
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUsedProductAtToday = async (req, res, next) => {
+  try {
+    const result = await getUsedProductAtTodayService(req);
+    return res.status(200).json({
+      success: true,
+      message: "Used product fetched successfully",
+      products: result,
     });
   } catch (error) {
     next(error);

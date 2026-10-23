@@ -11,12 +11,16 @@ import { sendExpiryMail } from "../services/inventory.service.js";
 cron.schedule("0 0 * * *", async () => {
   const today = dayjs();
 
-  const inventories = await Inventory.find().populate("product");
+  const inventories = await Inventory.find({
+    status: {
+      $not: "USED",
+    },
+  }).populate("product");
 
   for (const item of inventories) {
     const expiry = dayjs(item.expiryDate);
     const daysLeft = expiry.diff(today, "day");
-    const supplier = await User.findById(item.product.supplier);
+    const supplier = await User.findById(item.product.holder);
 
     if (daysLeft > 0 && daysLeft <= 7) {
       await sendExpiryMail(
@@ -25,6 +29,8 @@ cron.schedule("0 0 * * *", async () => {
         item.batchNumber,
         expiry.format("DD MMM YYYY"),
       );
+      item.status = "EXPIRING";
+      await item.save();
     }
 
     if (daysLeft <= 0) {
@@ -37,12 +43,17 @@ cron.schedule("0 0 * * *", async () => {
         expiryDate: item.expiryDate,
       });
 
-      await Inventory.findByIdAndDelete(item._id);
+      const inventoryItem = await Inventory.findById(item._id);
+      inventoryItem.status = "EXPIRED";
+      await inventoryItem.save();
+
       const isProductExist = await Inventory.find({
         product: item.product._id,
       });
       if (!isProductExist) {
-        await Product.findByIdAndDelete(item.product._id);
+        const product = await Product.findById(item.product._id);
+        product.allExpired = true;
+        await product.save();
       }
     }
   }
