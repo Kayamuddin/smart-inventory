@@ -27,6 +27,11 @@ function SideBar({ mobileOpen, setMobileOpen, collapsed }) {
       icon: <InventoryIcon />,
     },
     {
+      name: "Product Request",
+      path: "/supplier/manage-inventory-request",
+      icon: <InventoryIcon />,
+    },
+    {
       name: "Expired Products",
       path: "/supplier/expiredProducts",
       icon: <InventoryIcon />,

@@ -8,6 +8,8 @@ import cors from "cors";
 import adminRouter from "./routes/admin.routes.js";
 import cookieParser from "cookie-parser";
 import inventoryRouter from "./routes/inventory.routes.js";
+import menuProductRouter from "./routes/menuProduct.routes.js";
+import productTransferRouter from "./routes/productTransfer.routes.js";
 import "./cron/expiryCron.js";
 
 const app = express();
@@ -20,7 +22,7 @@ app.use(
 );
 
 app.use(express.json());
-if (env.NODE_ENV !== "production") {
+if (env.NODE_ENV == "development") {
   app.use(morgan("dev"));
 }
 
@@ -33,6 +35,8 @@ app.get("/", authMiddleware, (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/admin", adminRouter);
 app.use("/inventory", inventoryRouter);
+app.use("/menu-product", menuProductRouter);
+app.use("/product-transfer", productTransferRouter);
 
 app.use(errorHandler);
 

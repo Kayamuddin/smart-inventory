@@ -6,19 +6,28 @@ import {
   updateBatch,
   deleteBatch,
   getCategories,
+  deductUsedProductService,
+  getUsedProductAtTodayService,
 } from "../services/inventory.service.js";
 
 export default function useInventory() {
   const [inventory, setInventory] = useState([]);
+  const [usedProducts, setUsedProducts] = useState([]);
   const [filteredInventory, setFilteredInventory] = useState([]);
 
   const [loading, setLoading] = useState(false);
+  const [loadingUsedProduct, setLoadingUsedProduct] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("");
   const [categoriesData, setCategoriesData] = useState([]);
+  const [userRole, setUserRole] = useState({});
+
+  useEffect(() => {
+    setUserRole(JSON.parse(localStorage.getItem("user")).role);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,25 +91,108 @@ export default function useInventory() {
     try {
       setRefreshing(true);
       await loadInventory();
+      await fetchCategories();
     } finally {
       setRefreshing(false);
     }
   };
 
-  const createInventory = async (data) => {
-    await addInventory(data);
-    await refreshInventory();
-  };
+  let createInventory, editBatch, removeBatch;
+  if (userRole == "supplier" || userRole == "admin") {
+    createInventory = async (data) => {
+      await addInventory(data);
+      await refreshInventory();
+    };
 
-  const editBatch = async (batchId, data) => {
-    await updateBatch(batchId, data);
-    await refreshInventory();
-  };
+    editBatch = async (batchId, data) => {
+      await updateBatch(batchId, data);
+      await refreshInventory();
+    };
 
-  const removeBatch = async (batchId) => {
-    await deleteBatch(batchId);
-    await refreshInventory();
-  };
+    removeBatch = async (batchId) => {
+      await deleteBatch(batchId);
+      await refreshInventory();
+    };
+  }
+
+  let deductUsedProduct, getUsedProductAtToday;
+  if (userRole == "employee" || userRole == "admin") {
+    getUsedProductAtToday = async () => {
+      setLoadingUsedProduct(true);
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      if (!["employee", "admin"].includes(user?.role)) return;
+
+      const { products = [] } = await getUsedProductAtTodayService();
+
+      const groupedProducts = [
+        ...products
+          .reduce((map, item) => {
+            const productId = item.product?._id;
+
+            if (!productId) return map;
+
+            if (map.has(productId)) {
+              map.get(productId).quantity += Number(item.quantity);
+            } else {
+              map.set(productId, {
+                ...item,
+                quantity: Number(item.quantity),
+              });
+            }
+
+            return map;
+          }, new Map())
+          .values(),
+      ];
+
+      setUsedProducts(groupedProducts);
+      setLoadingUsedProduct(false);
+    };
+
+    deductUsedProduct = async (id, quantity) => {
+      await deductUsedProductService(id, quantity);
+      refreshInventory();
+      getUsedProductAtToday();
+    };
+  }
+
+  useEffect(() => {
+    const getUsedProductAtToday = async () => {
+      setLoadingUsedProduct(true);
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      if (!["employee", "admin"].includes(user?.role)) return;
+
+      const { products = [] } = await getUsedProductAtTodayService();
+
+      const groupedProducts = [
+        ...products
+          .reduce((map, item) => {
+            const productId = item.product?._id;
+
+            if (!productId) return map;
+
+            if (map.has(productId)) {
+              map.get(productId).quantity += Number(item.quantity);
+            } else {
+              map.set(productId, {
+                ...item,
+                quantity: Number(item.quantity),
+              });
+            }
+
+            return map;
+          }, new Map())
+          .values(),
+      ];
+
+      setUsedProducts(groupedProducts);
+      setLoadingUsedProduct(false);
+    };
+
+    getUsedProductAtToday();
+  }, []);
 
   const searchInventory = (keyword) => {
     setSearch(keyword);
@@ -129,12 +221,55 @@ export default function useInventory() {
     setFilteredInventory(filtered);
   };
 
-  const totalProducts = useMemo(() => inventory.length, [inventory]);
+  const totalProducts = useMemo(() => {
+    return inventory.reduce((total, product) => {
+      return (
+        total +
+        (product.batches.filter(
+          (batch) =>
+            batch.status !== "EXPIRED" &&
+            batch.status !== "USED" &&
+            (userRole != "employee"
+              ? batch.transferStatus == "ONSTOCK"
+              : batch.transferStatus == "DELIVERED"),
+        ).length == 0
+          ? 0
+          : 1)
+      );
+    }, 0);
+  }, [inventory]);
+
+  const totalBatches = useMemo(() => {
+    return inventory.reduce((total, product) => {
+      return (
+        total +
+        product.batches.filter(
+          (batch) =>
+            batch.status !== "EXPIRED" &&
+            batch.status !== "USED" &&
+            (userRole != "employee"
+              ? batch.transferStatus == "ONSTOCK"
+              : batch.transferStatus == "DELIVERED"),
+        ).length
+      );
+    }, 0);
+  }, [inventory]);
 
   const totalQuantity = useMemo(() => {
     return inventory.reduce((total, product) => {
       return (
-        total + product.batches.reduce((sum, batch) => sum + batch.quantity, 0)
+        total +
+        product.batches.reduce(
+          (sum, batch) =>
+            batch.status !== "EXPIRED" &&
+            batch.status !== "USED" &&
+            (userRole != "employee"
+              ? batch.transferStatus == "ONSTOCK"
+              : batch.transferStatus == "DELIVERED")
+              ? sum + batch.quantity
+              : sum,
+          0,
+        )
       );
     }, 0);
   }, [inventory]);
@@ -166,8 +301,13 @@ export default function useInventory() {
     removeBatch,
 
     totalProducts,
+    totalBatches,
     totalQuantity,
 
     setPagination,
+
+    deductUsedProduct,
+    usedProducts,
+    loadingUsedProduct,
   };
 }

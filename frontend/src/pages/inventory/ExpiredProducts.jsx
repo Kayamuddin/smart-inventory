@@ -15,6 +15,7 @@ import InventoryTable from "../../features/expiredInventory/InventoryTable.jsx";
 
 import useExpiredInventory from "../../hooks/useExpiredInventory";
 import { Refresh } from "@mui/icons-material";
+import { useSelector } from "react-redux";
 
 export default function ExpiredProducts() {
   const {
@@ -35,7 +36,8 @@ export default function ExpiredProducts() {
     filterByCategory,
   } = useExpiredInventory();
 
-  const role = localStorage.getItem("user").role;
+  const { user } = useSelector((state) => state.auth);
+  const role = user.role;
   const [searchEmail, setSearchEmail] = useState("");
   const [searchName, setSearchName] = useState("");
 
@@ -46,9 +48,9 @@ export default function ExpiredProducts() {
 
   return (
     <div className="w-full h-[calc(100vh-64px)] p-4 flex flex-col">
-      <Typography variant="h4" fontWeight={700} mb={3}>
-        Manage Inventory
-      </Typography>
+      <div className="text-[1.25rem] sm:text-[2.125rem] font-bold">
+        All Expired Products
+      </div>
 
       <Grid container spacing={2} mb={3}>
         <Grid size={4} className="bg-white text-black rounded text-center">
@@ -79,7 +81,7 @@ export default function ExpiredProducts() {
               setSearchEmail(e.target.value);
               searchInventoryByEmail(e.target.value);
             }}
-            className="h-9 max-w-75 w-full rounded border border-gray-300 bg-white px-3 text-black outline-none focus:border-blue-500"
+            className="h-10 max-w-75 w-full rounded border border-gray-300 bg-white px-3 text-black outline-none focus:border-blue-500"
           />
         )}
 
@@ -90,7 +92,7 @@ export default function ExpiredProducts() {
             setSearchName(e.target.value);
             searchInventoryByName(e.target.value);
           }}
-          className="h-9 max-w-75 w-full rounded border border-gray-300 bg-white px-3 text-black outline-none focus:border-blue-500"
+          className="h-10 max-w-75 w-full rounded border border-gray-300 bg-white px-3 text-black outline-none focus:border-blue-500"
         />
 
         <FormControl size="small" sx={{ width: "100%", maxWidth: 180 }}>

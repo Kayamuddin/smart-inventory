@@ -51,7 +51,7 @@ export const getAllUsers = async (req, res, next) => {
 
   pipeline.push({
     $sort: {
-      name: 1,
+      email: 1,
     },
   });
 
@@ -133,7 +133,13 @@ export const createUser = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      user,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
     });
   } catch (error) {
     next(error);

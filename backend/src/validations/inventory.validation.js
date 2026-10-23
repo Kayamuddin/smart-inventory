@@ -1,13 +1,15 @@
 import { body } from "express-validator";
 
 export const addInventoryValidation = [
-  body("name").trim().notEmpty(),
+  body("name").trim().notEmpty().withMessage("name is required."),
 
-  body("category").trim().notEmpty(),
+  body("category").trim().notEmpty().withMessage("category is required."),
 
-  body("quantity").isInt({ min: 1 }),
+  body("quantity").isInt({ min: 1 }).withMessage("Quantity is required."),
 
-  body("buyingPrice").isFloat({ min: 0 }),
+  body("buyingPrice")
+    .isFloat({ min: 0 })
+    .withMessage("buyingPrice is required."),
 
   body("expiryDate").isISO8601(),
 ];

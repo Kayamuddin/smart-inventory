@@ -13,7 +13,7 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    supplier: {
+    holder: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -23,13 +23,18 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: "pcs",
     },
+
+    allExpired: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   },
 );
 
-productSchema.index({ name: 1, supplier: 1 }, { unique: true });
+productSchema.index({ name: 1, holder: 1 }, { unique: true });
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;

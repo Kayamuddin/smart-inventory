@@ -67,16 +67,24 @@ export default function useUser() {
   };
 
   const addUser = async (data) => {
-    await createUser(data);
-    await refreshUsers();
+    const response = await createUser(data);
+    setUser((prev) =>
+      [...prev, response.user].sort((a, b) => a.email.localeCompare(b.email)),
+    );
   };
-  const editUser = async (id, data) => {
-    await updateUser(id, data);
-    await refreshUsers();
+
+  const editUser = async (oldUser, data) => {
+    const response = await updateUser(oldUser._id, data);
+    setUser((prev) =>
+      prev
+        .map((user) => (user._id === oldUser._id ? response.user : user))
+        .sort((a, b) => a.email.localeCompare(b.email)),
+    );
   };
-  const removeUser = async (id) => {
-    await deleteUser(id);
-    await refreshUsers();
+
+  const removeUser = async (oldUser) => {
+    await deleteUser(oldUser._id);
+    setUser((prev) => prev.filter((user) => user._id != oldUser._id));
   };
 
   const searchUser = (keyword) => {
@@ -114,13 +122,12 @@ export default function useUser() {
 
     pagination,
 
-    search,
     category,
     categoriesData,
 
-    setSearch,
     setCategory,
 
+    search,
     searchUser,
     filterByCategory,
 

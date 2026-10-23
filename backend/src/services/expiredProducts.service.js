@@ -31,7 +31,7 @@ export const getExpiredProductService = async (req) => {
   pipeline.push({
     $lookup: {
       from: "users",
-      localField: "product.supplier",
+      localField: "product.holder",
       foreignField: "_id",
       as: "user",
     },
@@ -43,17 +43,18 @@ export const getExpiredProductService = async (req) => {
 
   pipeline.push({
     $match: {
-      ...(req.user.role === "supplier" && {
-        "product.supplier": req.user._id,
+      ...((req.user.role === "supplier" || req.user.role === "employee") && {
+        "product.holder": req.user._id,
       }),
 
-      ...(searchByEmail && {
-        "user.email": {
-          $regex: searchByEmail,
+      ...(req.user.role === "admin" &&
+        searchByEmail && {
+          "user.email": {
+            $regex: searchByEmail,
 
-          $options: "i",
-        },
-      }),
+            $options: "i",
+          },
+        }),
 
       ...(searchByName && {
         "product.name": {
@@ -155,7 +156,7 @@ export const getExpiredCategoryService = async (req) => {
   pipeline.push({
     $match: {
       ...((req.user.role === "supplier" || req.user.role === "employee") && {
-        "product.supplier": req.user._id,
+        "product.holder": req.user._id,
       }),
       ...(category && {
         "product.category": category,

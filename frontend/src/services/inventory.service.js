@@ -40,16 +40,29 @@ export const getCategories = async (params) => {
 };
 
 export const getExpiredProductsService = async (params) => {
-  const { data } = await API.get("/inventory/expiredProducts", { params });
+  const { data } = await API.get("/inventory/expired-products", { params });
   return data;
 };
 
 export const getExpiringProductsService = async () => {
-  const { data } = await API.get("/inventory/expiringProducts");
+  const { data } = await API.get("/inventory/expiring-products");
   return data;
 };
 
 export const getExpiredCategoryService = async (params) => {
-  const { data } = await API.get("/inventory/expiredCategories", { params });
+  const { data } = await API.get("/inventory/expired-categories", { params });
+  return data;
+};
+
+export const deductUsedProductService = async (id, params) => {
+  const { data } = await API.patch(
+    `/inventory/deduct-used-product/${id}`,
+    params,
+  );
+  return data;
+};
+
+export const getUsedProductAtTodayService = async () => {
+  const { data } = await API.get("/inventory/used-product-at-today");
   return data;
 };

@@ -8,6 +8,12 @@ const inventorySchema = new mongoose.Schema(
       required: true,
     },
 
+    holder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
     batchNumber: {
       type: String,
       required: true,
@@ -43,12 +49,26 @@ const inventorySchema = new mongoose.Schema(
           type: Date,
           default: Date.now,
         },
+        transferStatus: {
+          type: String,
+          enum: ["ONSTOCK", "ONPACKING", "DELIVERED"],
+        },
+        status: {
+          type: String,
+          enum: ["ACTIVE", "EXPIRING", "EXPIRED", "USED"],
+        },
       },
     ],
 
+    transferStatus: {
+      type: String,
+      enum: ["ONSTOCK", "ONPACKING", "DELIVERED"],
+      default: "ONSTOCK",
+    },
+
     status: {
       type: String,
-      enum: ["ACTIVE", "EXPIRING", "EXPIRED"],
+      enum: ["ACTIVE", "EXPIRING", "EXPIRED", "USED"],
       default: "ACTIVE",
     },
   },
@@ -57,8 +77,8 @@ const inventorySchema = new mongoose.Schema(
   },
 );
 
-inventorySchema.index({ expiryDate: 1 });
-inventorySchema.index({ product: 1 });
+inventorySchema.index({ holder: 1, status: 1 });
+inventorySchema.index({ product: 1, holder: 1, transferStatus: 1, status: 1 });
 
 const Inventory = mongoose.model("Inventory", inventorySchema);
 export default Inventory;
